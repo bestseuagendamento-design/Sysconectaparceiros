@@ -1033,70 +1033,6 @@ app.delete("/make-server-f33747ec/estoque/:produtoId", async (c) => {
 });
 
 // =====================================================
-// 💰 FORNECEDOR - TAXAS ADICIONAIS (FRETE E NOTA FISCAL)
-// =====================================================
-
-// GET - Buscar taxas adicionais de um fornecedor
-app.get("/make-server-f33747ec/taxas/:fornecedorId", async (c) => {
-  const fornecedorId = c.req.param("fornecedorId");
-  console.log(`💰 Buscando taxas do fornecedor: ${fornecedorId}`);
-  
-  try {
-    const key = `taxas:${fornecedorId}`;
-    const taxas = await kv.get(key);
-    
-    if (taxas) {
-      console.log(`✅ Taxas encontradas:`, taxas);
-      return c.json({ 
-        success: true, 
-        taxas: taxas
-      }, 200);
-    } else {
-      console.log(`⚠️ Nenhuma taxa encontrada, retornando padrão`);
-      return c.json({ 
-        success: true, 
-        taxas: {
-          percentualNotaFiscal: 0,
-          valorFrete: 0,
-          tipoFrete: 'por_m2'
-        }
-      }, 200);
-    }
-  } catch (error) {
-    console.error('❌ Erro ao buscar taxas:', error);
-    return c.json({ 
-      success: false, 
-      error: 'Erro ao buscar taxas' 
-    }, 500);
-  }
-});
-
-// POST - Salvar taxas adicionais de um fornecedor
-app.post("/make-server-f33747ec/taxas/:fornecedorId", async (c) => {
-  const fornecedorId = c.req.param("fornecedorId");
-  console.log(`💰 Salvando taxas do fornecedor: ${fornecedorId}`);
-  
-  try {
-    const { taxas } = await c.req.json();
-    const key = `taxas:${fornecedorId}`;
-    
-    await kv.set(key, taxas);
-    console.log(`✅ Taxas salvas com sucesso:`, taxas);
-    
-    return c.json({ 
-      success: true, 
-      message: 'Taxas salvas com sucesso'
-    }, 200);
-  } catch (error) {
-    console.error('❌ Erro ao salvar taxas:', error);
-    return c.json({ 
-      success: false, 
-      error: 'Erro ao salvar taxas' 
-    }, 500);
-  }
-});
-
-// =====================================================
 // 🛒 FORNECEDOR - PEDIDOS
 // =====================================================
 
@@ -1875,8 +1811,48 @@ app.get("/make-server-f33747ec/fornecedores/estado/:estado", async (c) => {
   }
 });
 
-// 🗑️ ROTA REMOVIDA - Duplicada com a rota otimizada na linha 3233
-// Esta rota buscava por pedido:fornecedor: mas a nova busca por pedido:vidraceiro: e filtra
+// GET - Buscar pedidos do fornecedor
+app.get("/make-server-f33747ec/pedidos/fornecedor/:fornecedorId", async (c) => {
+  const fornecedorId = c.req.param("fornecedorId");
+  console.log(`📦 Buscando pedidos do fornecedor: ${fornecedorId}`);
+  
+  try {
+    // 🔥 BUSCAR COM O PADRÃO CORRETO: pedido:fornecedor:FORNECEDOR_ID:
+    const pedidos = await kv.getByPrefix(`pedido:fornecedor:${fornecedorId}:`);
+    
+    console.log(`✅ Encontrados ${pedidos.length} pedidos para ${fornecedorId}`);
+    console.log(`🔍 Buscando com padrão: pedido:fornecedor:${fornecedorId}:`);
+    
+    // 🔥 DEBUG: Log cada pedido encontrado
+    if (pedidos && pedidos.length > 0) {
+      pedidos.forEach((p, idx) => {
+        console.log(`  📦 Pedido ${idx + 1}:`, {
+          id: p?.id?.slice(0, 8),
+          status: p?.status,
+          vidraceiro: p?.vidraceiro_nome,
+          valor: p?.valor_total
+        });
+      });
+    } else {
+      console.log(`⚠️ Nenhum pedido encontrado com o padrão: pedido:fornecedor:${fornecedorId}:`);
+    }
+    
+    return c.json({ 
+      success: true, 
+      pedidos: pedidos || []
+    }, 200);
+  } catch (error) {
+    console.error('❌ Erro ao buscar pedidos:', error);
+    console.error('❌ Stack trace:', error.stack);
+    console.error('❌ Fornecedor ID:', fornecedorId);
+    
+    return c.json({ 
+      success: false, 
+      error: `Erro ao buscar pedidos: ${error.message}`,
+      pedidos: [] // 🔥 Retorna array vazio em vez de undefined
+    }, 500);
+  }
+});
 
 // PUT - Atualizar status do pedido (fornecedor)
 app.put("/make-server-f33747ec/pedidos/:pedidoId/status", async (c) => {
@@ -3259,37 +3235,15 @@ app.get("/make-server-f33747ec/pedidos/fornecedor/:fornecedorId", async (c) => {
   console.log(`📦 Buscando pedidos do fornecedor: ${fornecedorId}`);
   
   try {
-    // 🔥 BUSCAR EM TODOS OS LUGARES POSSÍVEIS!
-    console.log(`🔍 Buscando pedidos do fornecedor ${fornecedorId} em todas as fontes...`);
+    // Buscar TODOS os pedidos (sistema antigo)
+    const prefixoAntigo = 'pedido:vidraceiro:';
+    const todosPedidos = await kv.getByPrefix(prefixoAntigo);
     
-    // 1. Buscar por prefixo específico do fornecedor (SISTEMA NOVO)
-    const pedidosFornecedor = await kv.getByPrefix(`pedido:fornecedor:${fornecedorId}:`);
-    console.log(`   ✅ Encontrados ${pedidosFornecedor.length} pedidos em pedido:fornecedor:`);
-    
-    // 2. Buscar TODOS os pedidos de vidraceiros e filtrar (SISTEMA ANTIGO)
-    const todosPedidosVidraceiro = await kv.getByPrefix('pedido:vidraceiro:');
-    const pedidosVidraceiroFiltrados = todosPedidosVidraceiro.filter((p: any) => p.fornecedor_id === fornecedorId);
-    console.log(`   ✅ Encontrados ${pedidosVidraceiroFiltrados.length} pedidos em pedido:vidraceiro: (filtrados)`);
-    
-    // 3. MESCLAR AMBOS (sem duplicar)
-    const todosPedidos = [...pedidosFornecedor];
-    pedidosVidraceiroFiltrados.forEach((p: any) => {
-      const jaExiste = todosPedidos.find((existing: any) => existing.id === p.id);
-      if (!jaExiste) {
-        todosPedidos.push(p);
-      }
-    });
-    
-    console.log(`📦 Total de pedidos únicos encontrados: ${todosPedidos.length}`);
-    
-    // 🔥 LOG DETALHADO DOS PEDIDOS ANTES DO MAP
-    console.log('🔍 PRIMEIROS 5 PEDIDOS ENCONTRADOS:');
-    todosPedidos.slice(0, 5).forEach((p: any, idx: number) => {
-      console.log(`   ${idx + 1}. ID: ${p.id?.slice(0, 12)}, Fornecedor: ${p.fornecedor_id}, Vidraceiro: ${p.vidraceiro_nome}, Status: ${p.status}, Items: ${p.items?.length || 0}`);
-    });
+    console.log(`📦 Total de pedidos no banco: ${todosPedidos.length}`);
     
     // Filtrar por fornecedor_id E otimizar campos (remover dados pesados)
     const pedidosDoFornecedor = todosPedidos
+      .filter((p: any) => p.fornecedor_id === fornecedorId)
       .map((p: any) => ({
         // Apenas campos essenciais
         id: p.id,
@@ -3329,7 +3283,6 @@ app.get("/make-server-f33747ec/pedidos/fornecedor/:fornecedorId", async (c) => {
     });
     
     console.log(`✅ ${pedidosDoFornecedor.length} pedidos do fornecedor ${fornecedorId}`);
-    console.log(`🔥 RETORNANDO: { success: true, total: ${pedidosDoFornecedor.length}, pedidos: [...] }`);
     
     return c.json({ 
       success: true, 
@@ -3435,23 +3388,13 @@ app.get("/make-server-f33747ec/debug/pedidos-all", async (c) => {
     console.log(`📦 Chaves com "pedido:": ${pedidosPrefixo1.length}`);
     console.log(`📦 Chaves com "pedidos:": ${pedidosPrefixo2.length}`);
     
-    // 🔥 CONTAR PEDIDOS POR TIPO
-    const comFornecedorId = pedidosPrefixo1.filter((p: any) => p.fornecedor_id).length;
-    const comVidraceiroId = pedidosPrefixo1.filter((p: any) => p.vidraceiro_id).length;
-    
-    console.log(`   📦 Pedidos com fornecedor_id: ${comFornecedorId}`);
-    console.log(`   📦 Pedidos com vidraceiro_id: ${comVidraceiroId}`);
-    
     // Analisar estrutura dos pedidos
     const analise = {
-      antigos: pedidosPrefixo1.slice(0, 5).map((p: any) => ({
-        id: p.id?.slice(0, 8),
-        vidraceiro_id: p.vidraceiro_id?.slice(0, 12),
-        vidraceiro_nome: p.vidraceiro_nome,
+      antigos: pedidosPrefixo1.slice(0, 3).map((p: any) => ({
+        id: p.id,
+        vidraceiro_id: p.vidraceiro_id,
         fornecedor_id: p.fornecedor_id,
-        fornecedor_nome: p.fornecedor_nome,
-        status: p.status,
-        valor: p.valor_total
+        status: p.status
       })),
       novos: pedidosPrefixo2.slice(0, 3).map((item: any) => ({
         total_pedidos: item.pedidos?.length || 0,
@@ -3466,14 +3409,7 @@ app.get("/make-server-f33747ec/debug/pedidos-all", async (c) => {
       total: pedidosPrefixo1.length + pedidosPrefixo2.length,
       pedidos_antigos: pedidosPrefixo1,
       pedidos_novos: pedidosPrefixo2.map((item: any) => item.pedidos || []).flat(),
-      analise,
-      // 🔥 ADICIONAR CONTADORES
-      contadores: {
-        total_pedido_prefix: pedidosPrefixo1.length,
-        total_pedidos_prefix: pedidosPrefixo2.length,
-        com_fornecedor_id: comFornecedorId,
-        com_vidraceiro_id: comVidraceiroId
-      }
+      analise
     }, 200);
   } catch (error) {
     console.error('❌ Erro ao listar pedidos:', error);

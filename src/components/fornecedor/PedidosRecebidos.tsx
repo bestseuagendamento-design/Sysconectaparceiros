@@ -164,24 +164,11 @@ export function PedidosRecebidos({ fornecedorId, tipoFornecedor }: PedidosRecebi
         console.log('✅ Data completo:', JSON.stringify(data, null, 2));
         console.log('✅ Tipo de data:', typeof data);
         console.log('✅ Keys de data:', Object.keys(data));
-        console.log('✅ data.success existe?', !!data.success);
         console.log('✅ data.pedidos existe?', !!data.pedidos);
         console.log('✅ Tipo de data.pedidos:', typeof data.pedidos);
         console.log('✅ É array?', Array.isArray(data.pedidos));
         console.log('✅ Quantidade de pedidos:', data.pedidos?.length || 0);
         console.log('✅ ============================================');
-        
-        // 🔥 VERIFICAR result.success IGUAL NA GESTÃO DE STATUS
-        if (data.success && data.pedidos) {
-          console.log('✅ SUCCESS = TRUE! Setando pedidos:', data.pedidos.length);
-          setPedidos(data.pedidos);
-        } else {
-          console.error('❌ SUCCESS = FALSE ou pedidos vazio!');
-          console.error('❌ data.success:', data.success);
-          console.error('❌ data.pedidos:', data.pedidos);
-          console.error('❌ data.error:', data.error);
-          setPedidos([]);
-        }
         
         if (data.pedidos && data.pedidos.length > 0) {
           console.log('📦 ============================================');
@@ -207,11 +194,11 @@ export function PedidosRecebidos({ fornecedorId, tipoFornecedor }: PedidosRecebi
           console.warn('⚠️ ============================================');
           console.warn('⚠️ NENHUM PEDIDO ENCONTRADO!');
           console.warn('⚠️ data.pedidos:', data.pedidos);
-          console.warn('⚠️ data.success:', data.success);
-          console.warn('⚠️ data.error:', data.error);
           console.warn('⚠️ Verifique se o fornecedor tem pedidos no banco');
           console.warn('⚠️ ============================================');
         }
+        
+        setPedidos(data.pedidos || []);
         
         // 🔥 DEBUG
         setDebugInfo({
@@ -453,234 +440,214 @@ export function PedidosRecebidos({ fornecedorId, tipoFornecedor }: PedidosRecebi
 
   return (
     <div className="space-y-6 p-6 bg-[#0F0F0F] min-h-screen">
-      {/* 🔥 BOTÃO PARA MOSTRAR DEBUG (quando escondido) */}
-      {!debugExpanded && (
-        <button
-          onClick={() => setDebugExpanded(true)}
-          className="fixed bottom-6 right-6 z-50 px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-black font-bold rounded-full shadow-2xl transition-all flex items-center gap-2 animate-pulse"
-        >
-          <Bug className="w-5 h-5" />
-          MOSTRAR DEBUG
-        </button>
-      )}
-
-      {/* 🔥 PAINEL DE DEBUG - COLAPSÁVEL */}
-      {debugExpanded && (
-        <div className="bg-yellow-500/10 border-4 border-yellow-500 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Bug className="w-8 h-8 text-yellow-500 animate-pulse" />
-              <div>
-                <h3 className="font-black text-yellow-500 text-xl">🔍 DEBUG ATIVO</h3>
-                <p className="text-yellow-300 text-sm">Abra o Console (F12) para ver os logs detalhados</p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setDebugExpanded(false)}
-                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg transition-all flex items-center gap-2"
-              >
-                <ChevronUp className="w-5 h-5" />
-                ESCONDER DEBUG
-              </button>
-              <button
-                onClick={() => {
-                  console.log('🔄 RECARREGANDO PEDIDOS MANUALMENTE...');
-                  carregarPedidos();
-                }}
-                className="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-black font-bold rounded-lg transition-all flex items-center gap-2"
-              >
-                <RefreshCw className="w-5 h-5" />
-                RECARREGAR
-              </button>
-              <button
-                onClick={async () => {
-                  setFazendoVarredura(true);
-                  const resultado = await fazerVarreduraMassiva(projectId, publicAnonKey, fornecedorId);
-                  setDebugInfo(prev => ({ ...prev, varreduraCompleta: resultado }));
-                  setFazendoVarredura(false);
-                }}
-                disabled={fazendoVarredura}
-                className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-all flex items-center gap-2 disabled:opacity-50 animate-pulse"
-              >
-                {fazendoVarredura ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Search className="w-5 h-5" />
-                )}
-                {fazendoVarredura ? 'VARRENDO...' : '🚨 VARREDURA MASSIVA'}
-              </button>
+      {/* 🔥 PAINEL DE DEBUG - SEMPRE VISÍVEL NO TOPO */}
+      <div className="bg-yellow-500/10 border-4 border-yellow-500 rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Bug className="w-8 h-8 text-yellow-500 animate-pulse" />
+            <div>
+              <h3 className="font-black text-yellow-500 text-xl">🔍 DEBUG ATIVO</h3>
+              <p className="text-yellow-300 text-sm">Abra o Console (F12) para ver os logs detalhados</p>
             </div>
           </div>
-
-          <div className="grid grid-cols-4 gap-4 mb-4">
-            <div className="p-4 bg-black/60 rounded-lg border-2 border-yellow-500/30">
-              <p className="text-xs text-yellow-500/70 mb-1">⏰ Última Atualização</p>
-              <p className="text-lg font-bold text-white">
-                {debugInfo.timestamp ? new Date(debugInfo.timestamp).toLocaleTimeString('pt-BR') : 'Aguardando...'}
-              </p>
-            </div>
-            <div className="p-4 bg-black/60 rounded-lg border-2 border-yellow-500/30">
-              <p className="text-xs text-yellow-500/70 mb-1">📡 Status HTTP</p>
-              <p className={`text-2xl font-black ${
-                debugInfo.responseStatus === 200 ? 'text-emerald-400' : 'text-red-400'
-              }`}>
-                {debugInfo.responseStatus || 'N/A'}
-              </p>
-            </div>
-            <div className="p-4 bg-black/60 rounded-lg border-2 border-yellow-500/30">
-              <p className="text-xs text-yellow-500/70 mb-1">📦 Total de Pedidos</p>
-              <p className="text-4xl font-black text-yellow-500">{debugInfo.totalPedidos}</p>
-            </div>
-            <div className="p-4 bg-black/60 rounded-lg border-2 border-yellow-500/30">
-              <p className="text-xs text-yellow-500/70 mb-1">⚠️ Erros</p>
-              <p className={`text-lg font-bold ${
-                debugInfo.erros.length === 0 ? 'text-emerald-400' : 'text-red-400'
-              }`}>
-                {debugInfo.erros.length === 0 ? '✓ Nenhum' : `${debugInfo.erros.length} erro(s)`}
-              </p>
-            </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                console.log('🔄 RECARREGANDO PEDIDOS MANUALMENTE...');
+                carregarPedidos();
+              }}
+              className="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-black font-bold rounded-lg transition-all flex items-center gap-2"
+            >
+              <RefreshCw className="w-5 h-5" />
+              RECARREGAR
+            </button>
+            <button
+              onClick={async () => {
+                setFazendoVarredura(true);
+                const resultado = await fazerVarreduraMassiva(projectId, publicAnonKey, fornecedorId);
+                setDebugInfo(prev => ({ ...prev, varreduraCompleta: resultado }));
+                setFazendoVarredura(false);
+              }}
+              disabled={fazendoVarredura}
+              className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-all flex items-center gap-2 disabled:opacity-50 animate-pulse"
+            >
+              {fazendoVarredura ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Search className="w-5 h-5" />
+              )}
+              {fazendoVarredura ? 'VARRENDO...' : '🚨 VARREDURA MASSIVA'}
+            </button>
           </div>
+        </div>
 
-          {/* Mostra primeiros 2 pedidos */}
-          {pedidos.length > 0 && (
-            <div className="space-y-3">
-              <p className="text-sm text-yellow-500/70 font-bold">🔎 PRIMEIROS 2 PEDIDOS:</p>
-              {pedidos.slice(0, 2).map((p, idx) => (
-                <div key={idx} className="p-4 bg-black/80 rounded-lg border-2 border-yellow-500/30">
-                  <div className="grid grid-cols-3 gap-3 text-sm">
-                    <div>
-                      <span className="text-yellow-500/70">ID:</span>
-                      <span className="ml-2 text-white font-mono">{p.id.slice(0, 15)}...</span>
-                    </div>
-                    <div>
-                      <span className="text-yellow-500/70">Status:</span>
-                      <span className="ml-2 text-emerald-400 font-bold">{p.status}</span>
-                    </div>
-                    <div>
-                      <span className="text-yellow-500/70">Valor:</span>
-                      <span className="ml-2 text-white font-bold">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.valor_total)}
-                      </span>
-                    </div>
-                    <div className="col-span-3 border-t border-yellow-500/20 pt-2 mt-2">
-                      <span className="text-yellow-500/70">👤 VIDRACEIRO:</span>
-                      <span className={`ml-2 font-black text-lg ${
-                        p.vidraceiro_nome === 'Vidraçaria Parceira' 
-                          ? 'text-red-500 animate-pulse' 
-                          : 'text-emerald-400'
-                      }`}>
-                        {p.vidraceiro_nome || '⚠️ SEM NOME'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-yellow-500/70">📧:</span>
-                      <span className="ml-2 text-white text-xs">{p.vidraceiro_email || 'N/A'}</span>
-                    </div>
-                    <div>
-                      <span className="text-yellow-500/70">📞:</span>
-                      <span className="ml-2 text-white">{p.vidraceiro_telefone || 'N/A'}</span>
-                    </div>
-                    <div>
-                      <span className="text-yellow-500/70">📍:</span>
-                      <span className="ml-2 text-white">{p.vidraceiro_cidade || 'N/A'}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Erros visíveis */}
-          {debugInfo.erros.length > 0 && (
-            <div className="mt-4 p-4 bg-red-500/20 border-2 border-red-500 rounded-lg">
-              <p className="text-red-400 font-bold mb-2">❌ ERROS DETECTADOS:</p>
-              {debugInfo.erros.map((erro: any, idx: number) => (
-                <pre key={idx} className="text-xs text-red-300 overflow-auto">
-                  {JSON.stringify(erro, null, 2)}
-                </pre>
-              ))}
-            </div>
-          )}
-
-          {/* Resultados da Varredura Massiva */}
-          {debugInfo.varreduraCompleta && (
-            <div className="mt-4 p-6 bg-red-500/10 border-4 border-red-500 rounded-xl">
-              <h4 className="text-red-500 font-black text-lg mb-4">🚨 RESULTADO DA VARREDURA MASSIVA</h4>
-              
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="p-4 bg-black/60 rounded-lg border-2 border-red-500/30">
-                  <p className="text-xs text-red-500/70 mb-1">🔍 Tentativas</p>
-                  <p className="text-3xl font-black text-red-500">{debugInfo.varreduraCompleta.tentativas?.length || 0}</p>
-                </div>
-                <div className="p-4 bg-black/60 rounded-lg border-2 border-emerald-500/30">
-                  <p className="text-xs text-emerald-500/70 mb-1">✅ Fontes com Dados</p>
-                  <p className="text-3xl font-black text-emerald-500">{debugInfo.varreduraCompleta.encontrados?.length || 0}</p>
-                </div>
-                <div className="p-4 bg-black/60 rounded-lg border-2 border-orange-500/30">
-                  <p className="text-xs text-orange-500/70 mb-1">❌ Erros</p>
-                  <p className="text-3xl font-black text-orange-500">{debugInfo.varreduraCompleta.erros?.length || 0}</p>
-                </div>
-              </div>
-
-              {debugInfo.varreduraCompleta.encontrados?.length > 0 && (
-                <div className="space-y-3">
-                  <p className="text-sm text-emerald-500 font-bold">📦 FONTES COM DADOS ENCONTRADAS:</p>
-                  {debugInfo.varreduraCompleta.encontrados.map((fonte: any, idx: number) => (
-                    <div key={idx} className="p-4 bg-black/80 rounded-lg border-2 border-emerald-500/30">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-bold text-emerald-400">{fonte.origem}</span>
-                        <span className="px-3 py-1 bg-emerald-500 text-black rounded-full text-sm font-bold">
-                          {fonte.total} item(s)
-                        </span>
-                      </div>
-                      <details className="text-xs">
-                        <summary className="cursor-pointer text-emerald-300 hover:text-emerald-200">Ver dados...</summary>
-                        <pre className="mt-2 p-2 bg-black/60 rounded text-emerald-200 overflow-auto max-h-60">
-                          {JSON.stringify(fonte, null, 2)}
-                        </pre>
-                      </details>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {debugInfo.varreduraCompleta.tentativas?.length > 0 && (
-                <div className="mt-4">
-                  <details>
-                    <summary className="cursor-pointer text-red-300 hover:text-red-200 font-bold text-sm">
-                      📊 Ver todas as tentativas ({debugInfo.varreduraCompleta.tentativas.length})
-                    </summary>
-                    <div className="mt-3 space-y-2">
-                      {debugInfo.varreduraCompleta.tentativas.map((tentativa: any, idx: number) => (
-                        <div key={idx} className="p-3 bg-black/60 rounded-lg border border-red-500/20 text-xs">
-                          <div className="flex items-center justify-between">
-                            <span className="text-red-300">{tentativa.rota}</span>
-                            <div className="flex items-center gap-2">
-                              <span className={`px-2 py-1 rounded text-xs font-bold ${
-                                tentativa.status === 200 ? 'bg-emerald-500 text-black' : 'bg-red-500 text-white'
-                              }`}>
-                                HTTP {tentativa.status}
-                              </span>
-                              <span className="text-yellow-500">{tentativa.total} item(s)</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </details>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="mt-4 p-3 bg-black/60 rounded-lg border border-yellow-500/30">
-            <p className="text-xs text-yellow-500">
-              💡 <strong>INSTRUÇÕES:</strong> Clique em "🚨 VARREDURA MASSIVA" para buscar pedidos em TODOS os lugares possíveis do sistema. Abra o Console (F12) para ver logs detalhados.
+        <div className="grid grid-cols-4 gap-4 mb-4">
+          <div className="p-4 bg-black/60 rounded-lg border-2 border-yellow-500/30">
+            <p className="text-xs text-yellow-500/70 mb-1">⏰ Última Atualização</p>
+            <p className="text-lg font-bold text-white">
+              {debugInfo.timestamp ? new Date(debugInfo.timestamp).toLocaleTimeString('pt-BR') : 'Aguardando...'}
+            </p>
+          </div>
+          <div className="p-4 bg-black/60 rounded-lg border-2 border-yellow-500/30">
+            <p className="text-xs text-yellow-500/70 mb-1">📡 Status HTTP</p>
+            <p className={`text-2xl font-black ${
+              debugInfo.responseStatus === 200 ? 'text-emerald-400' : 'text-red-400'
+            }`}>
+              {debugInfo.responseStatus || 'N/A'}
+            </p>
+          </div>
+          <div className="p-4 bg-black/60 rounded-lg border-2 border-yellow-500/30">
+            <p className="text-xs text-yellow-500/70 mb-1">📦 Total de Pedidos</p>
+            <p className="text-4xl font-black text-yellow-500">{debugInfo.totalPedidos}</p>
+          </div>
+          <div className="p-4 bg-black/60 rounded-lg border-2 border-yellow-500/30">
+            <p className="text-xs text-yellow-500/70 mb-1">⚠️ Erros</p>
+            <p className={`text-lg font-bold ${
+              debugInfo.erros.length === 0 ? 'text-emerald-400' : 'text-red-400'
+            }`}>
+              {debugInfo.erros.length === 0 ? '✓ Nenhum' : `${debugInfo.erros.length} erro(s)`}
             </p>
           </div>
         </div>
-      )}
+
+        {/* Mostra primeiros 2 pedidos */}
+        {pedidos.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-sm text-yellow-500/70 font-bold">🔎 PRIMEIROS 2 PEDIDOS:</p>
+            {pedidos.slice(0, 2).map((p, idx) => (
+              <div key={idx} className="p-4 bg-black/80 rounded-lg border-2 border-yellow-500/30">
+                <div className="grid grid-cols-3 gap-3 text-sm">
+                  <div>
+                    <span className="text-yellow-500/70">ID:</span>
+                    <span className="ml-2 text-white font-mono">{p.id.slice(0, 15)}...</span>
+                  </div>
+                  <div>
+                    <span className="text-yellow-500/70">Status:</span>
+                    <span className="ml-2 text-emerald-400 font-bold">{p.status}</span>
+                  </div>
+                  <div>
+                    <span className="text-yellow-500/70">Valor:</span>
+                    <span className="ml-2 text-white font-bold">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.valor_total)}
+                    </span>
+                  </div>
+                  <div className="col-span-3 border-t border-yellow-500/20 pt-2 mt-2">
+                    <span className="text-yellow-500/70">👤 VIDRACEIRO:</span>
+                    <span className={`ml-2 font-black text-lg ${
+                      p.vidraceiro_nome === 'Vidraçaria Parceira' 
+                        ? 'text-red-500 animate-pulse' 
+                        : 'text-emerald-400'
+                    }`}>
+                      {p.vidraceiro_nome || '⚠️ SEM NOME'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-yellow-500/70">📧:</span>
+                    <span className="ml-2 text-white text-xs">{p.vidraceiro_email || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-yellow-500/70">📞:</span>
+                    <span className="ml-2 text-white">{p.vidraceiro_telefone || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-yellow-500/70">📍:</span>
+                    <span className="ml-2 text-white">{p.vidraceiro_cidade || 'N/A'}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Erros visíveis */}
+        {debugInfo.erros.length > 0 && (
+          <div className="mt-4 p-4 bg-red-500/20 border-2 border-red-500 rounded-lg">
+            <p className="text-red-400 font-bold mb-2">❌ ERROS DETECTADOS:</p>
+            {debugInfo.erros.map((erro: any, idx: number) => (
+              <pre key={idx} className="text-xs text-red-300 overflow-auto">
+                {JSON.stringify(erro, null, 2)}
+              </pre>
+            ))}
+          </div>
+        )}
+
+        {/* Resultados da Varredura Massiva */}
+        {debugInfo.varreduraCompleta && (
+          <div className="mt-4 p-6 bg-red-500/10 border-4 border-red-500 rounded-xl">
+            <h4 className="text-red-500 font-black text-lg mb-4">🚨 RESULTADO DA VARREDURA MASSIVA</h4>
+            
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="p-4 bg-black/60 rounded-lg border-2 border-red-500/30">
+                <p className="text-xs text-red-500/70 mb-1">🔍 Tentativas</p>
+                <p className="text-3xl font-black text-red-500">{debugInfo.varreduraCompleta.tentativas?.length || 0}</p>
+              </div>
+              <div className="p-4 bg-black/60 rounded-lg border-2 border-emerald-500/30">
+                <p className="text-xs text-emerald-500/70 mb-1">✅ Fontes com Dados</p>
+                <p className="text-3xl font-black text-emerald-500">{debugInfo.varreduraCompleta.encontrados?.length || 0}</p>
+              </div>
+              <div className="p-4 bg-black/60 rounded-lg border-2 border-orange-500/30">
+                <p className="text-xs text-orange-500/70 mb-1">❌ Erros</p>
+                <p className="text-3xl font-black text-orange-500">{debugInfo.varreduraCompleta.erros?.length || 0}</p>
+              </div>
+            </div>
+
+            {debugInfo.varreduraCompleta.encontrados?.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-sm text-emerald-500 font-bold">📦 FONTES COM DADOS ENCONTRADAS:</p>
+                {debugInfo.varreduraCompleta.encontrados.map((fonte: any, idx: number) => (
+                  <div key={idx} className="p-4 bg-black/80 rounded-lg border-2 border-emerald-500/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-bold text-emerald-400">{fonte.origem}</span>
+                      <span className="px-3 py-1 bg-emerald-500 text-black rounded-full text-sm font-bold">
+                        {fonte.total} item(s)
+                      </span>
+                    </div>
+                    <details className="text-xs">
+                      <summary className="cursor-pointer text-emerald-300 hover:text-emerald-200">Ver dados...</summary>
+                      <pre className="mt-2 p-2 bg-black/60 rounded text-emerald-200 overflow-auto max-h-60">
+                        {JSON.stringify(fonte, null, 2)}
+                      </pre>
+                    </details>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {debugInfo.varreduraCompleta.tentativas?.length > 0 && (
+              <div className="mt-4">
+                <details>
+                  <summary className="cursor-pointer text-red-300 hover:text-red-200 font-bold text-sm">
+                    📊 Ver todas as tentativas ({debugInfo.varreduraCompleta.tentativas.length})
+                  </summary>
+                  <div className="mt-3 space-y-2">
+                    {debugInfo.varreduraCompleta.tentativas.map((tentativa: any, idx: number) => (
+                      <div key={idx} className="p-3 bg-black/60 rounded-lg border border-red-500/20 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-red-300">{tentativa.rota}</span>
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-1 rounded text-xs font-bold ${
+                              tentativa.status === 200 ? 'bg-emerald-500 text-black' : 'bg-red-500 text-white'
+                            }`}>
+                              HTTP {tentativa.status}
+                            </span>
+                            <span className="text-yellow-500">{tentativa.total} item(s)</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="mt-4 p-3 bg-black/60 rounded-lg border border-yellow-500/30">
+          <p className="text-xs text-yellow-500">
+            💡 <strong>INSTRUÇÕES:</strong> Clique em "🚨 VARREDURA MASSIVA" para buscar pedidos em TODOS os lugares possíveis do sistema. Abra o Console (F12) para ver logs detalhados.
+          </p>
+        </div>
+      </div>
 
       {/* Header */}
       <div className="flex items-center justify-between">

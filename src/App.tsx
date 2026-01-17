@@ -32,7 +32,6 @@ import { NotificacaoAprovacao } from './components/NotificacaoAprovacao'; // �
 import { GestaoProducaoCompleta } from './components/GestaoProducaoCompleta'; // 🔥 NOVO
 import { RomaneioCarregamento } from './components/RomaneioCarregamento'; // 🔥 NOVO
 import { ConfiguradorSupremaCompleto } from './components/ConfiguradorSupremaCompleto'; // 🔥 NOVO
-import { LeitorDWG } from './components/vidracaria/LeitorDWG'; // 🔥 LEITOR DWG
 import { InicializarBanco } from './components/admin/InicializarBanco'; // 🔥 ADMIN
 import { AdminLogin } from './components/AdminLogin'; // 🔥 ADMIN LOGIN
 import { AdminDashboard } from './components/AdminDashboard'; // 🔥 ADMIN DASHBOARD
@@ -71,7 +70,6 @@ type Screen =
   | 'configurador-suprema'
   | 'gestao-producao'
   | 'romaneio-carregamento'
-  | 'leitor-dwg'
   | 'admin-inicializar-banco'
   | 'admin-login'
   | 'admin-dashboard'
@@ -439,18 +437,6 @@ export default function App() {
       console.log('📋 FLUXO: Cliente → Linha (SUPREMA) → Produto → Configuração → Lista Material → Compra → Pagamento → Comprovante → Acompanhamento');
     };
     console.log('🔥 NOVO SISTEMA: Digite no console: acessarNovoOrcamento()');
-  }, [setCurrentScreen, setUserRole, setUserName]);
-
-  // 🔥 NOVO: FUNÇÃO DE ACESSO RÁPIDO AO LEITOR DWG
-  useEffect(() => {
-    (window as any).acessarLeitorDWG = () => {
-      console.log('📐 ACESSANDO LEITOR DWG...');
-      setCurrentScreen('leitor-dwg');
-      setUserRole('vidraceiro');
-      setUserName('Vidraceiro Teste');
-      console.log('✅ Leitor DWG carregado! Faça upload de um arquivo DXF para testar.');
-    };
-    console.log('🔥 LEITOR DWG: Digite no console: acessarLeitorDWG()');
   }, [setCurrentScreen, setUserRole, setUserName]);
 
   // 🔥 CLIENTES - PERSISTÊNCIA TOTAL NA NUVEM (VIA PROXY KV)
@@ -1470,7 +1456,7 @@ export default function App() {
                     // 🔥 ADICIONAR ID AO FORNECEDOR
                     const fornecedorData = {
                         ...dados.dadosEmpresa,
-                        id: 'forn-vidro-01' // 🔥 ID PADRONIZADO (mesmo do DEV switch e GestaoStatusPedidos)
+                        id: 'forn-santa-rita-vidros' // 🔥 ID ÚNICO PARA CONSULTAS NO BANCO
                     };
                     
                     setSantaRitaUserData(fornecedorData);
@@ -1897,22 +1883,6 @@ export default function App() {
             </div>
           </div>
         )
-      )}
-
-      {/* 🔥 NOVA TELA - LEITOR DWG */}
-      {currentScreen === 'leitor-dwg' && (
-        <div className="min-h-screen bg-slate-50 p-4 md:p-8">
-          <div className="max-w-7xl mx-auto">
-            <LeitorDWG
-              onImportarParaOrcamento={(elementos) => {
-                console.log('📐 Elementos importados do DWG:', elementos);
-                // TODO: Integrar com sistema de orçamento
-                toast.success(`${elementos.length} elementos prontos para orçamento!`);
-                setCurrentScreen('03-dashboard-execucao');
-              }}
-            />
-          </div>
-        </div>
       )}
 
       {/* 🔥 FALLBACK DE SEGURANÇA - Previne tela branca */}

@@ -5,11 +5,7 @@ import {
   DollarSign, 
   AlertCircle,
   Loader2,
-  MapPin,
-  Truck,
-  FileText,
-  Calculator,
-  Settings
+  MapPin
 } from 'lucide-react';
 import { CATALOGO_VIDROS, CATEGORIAS_VIDRO } from '../../data/catalogoVidrosMestre';
 import { toast } from 'sonner@2.0.3';
@@ -21,13 +17,6 @@ interface PrecoItem {
   margemLucro: number;
   precoVenda: number;
   ativo: boolean;
-}
-
-// 🔥 NOVO: Interface para taxas adicionais
-interface TaxasAdicionais {
-  percentualNotaFiscal: number; // % sobre o valor total
-  valorFrete: number; // R$ por m², por kg ou fixo
-  tipoFrete: 'fixo' | 'por_m2' | 'por_peso'; // Tipo de cobrança do frete
 }
 
 // Mapa de preços: SKU_ID -> PrecoItem
@@ -43,13 +32,6 @@ export function GestaoPrecos({ fornecedorId }: GestaoPrecosProps) {
   const [tabelaPrecos, setTabelaPrecos] = useState<TabelaPrecos>({});
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
-  
-  // 🔥 NOVO: Estado para taxas adicionais (Frete e Nota Fiscal)
-  const [taxas, setTaxas] = useState<TaxasAdicionais>({
-    percentualNotaFiscal: 0,
-    valorFrete: 0,
-    tipoFrete: 'por_m2'
-  });
 
   // Carregar preços do banco ao iniciar
   useEffect(() => {
@@ -68,31 +50,6 @@ export function GestaoPrecos({ fornecedorId }: GestaoPrecosProps) {
         } else {
             console.log('⚠️ Nenhuma tabela encontrada, iniciando vazia.');
         }
-        
-        // 2. 🔥 NOVO: Carregar taxas adicionais
-        try {
-          const response = await fetch(
-            `https://${projectId}.supabase.co/functions/v1/make-server-f33747ec/taxas/${fornecedorId}`,
-            {
-              method: 'GET',
-              headers: {
-                'Authorization': `Bearer ${publicAnonKey}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-          
-          if (response.ok) {
-            const result = await response.json();
-            if (result.success && result.taxas) {
-              setTaxas(result.taxas);
-              console.log('✅ Taxas carregadas:', result.taxas);
-            }
-          }
-        } catch (err) {
-          console.warn('⚠️ Nenhuma taxa encontrada, usando padrão:', err);
-        }
-        
       } catch (error) {
         console.error('Erro ao carregar tabela de preços:', error);
         toast.error('Erro ao carregar preços. Verifique sua conexão.');
@@ -113,31 +70,14 @@ export function GestaoPrecos({ fornecedorId }: GestaoPrecosProps) {
     try {
       setSalvando(true);
       
-      // 1. 🔥 SALVAR TABELA DE PREÇOS
-      const sucessoPrecos = await salvarNoBanco('preco', fornecedorId, tabelaPrecos);
+      // 🔥 SALVA DIRETO NO KV STORE (Garantia de Leitura pelo Configurador)
+      const sucesso = await salvarNoBanco('preco', fornecedorId, tabelaPrecos);
 
-      if (!sucessoPrecos) {
-        throw new Error('Falha ao escrever tabela de preços no banco.');
-      }
-      
-      // 2. 🔥 NOVO: SALVAR TAXAS ADICIONAIS
-      const responseTaxas = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-f33747ec/taxas/${fornecedorId}`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ taxas })
-        }
-      );
-      
-      if (!responseTaxas.ok) {
-        throw new Error('Falha ao salvar taxas adicionais.');
+      if (!sucesso) {
+        throw new Error('Falha ao escrever no banco de dados.');
       }
 
-      toast.success('Tabela e taxas salvas com sucesso!');
+      toast.success('Tabela salva e sincronizada com sucesso!');
       
     } catch (error: any) {
       console.error('Erro fatal ao salvar:', error);
@@ -258,103 +198,6 @@ export function GestaoPrecos({ fornecedorId }: GestaoPrecosProps) {
                 {cat}
               </button>
             ))}
-        </div>
-      </div>
-
-      {/* 🔥 NOVO: SEÇÃO DE TAXAS ADICIONAIS (FRETE E NOTA FISCAL) */}
-      <div className="p-4 md:p-6 bg-gradient-to-r from-blue-50 to-emerald-50 border-b border-blue-100">
-        <div className="flex items-center gap-2 mb-4">
-          <Calculator className="w-5 h-5 text-blue-600" />
-          <h3 className="font-bold text-slate-900 text-sm md:text-base">Taxas Adicionais (aplicadas no orçamento)</h3>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* NOTA FISCAL */}
-          <div className="bg-white rounded-lg p-4 border border-blue-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <FileText className="w-4 h-4 text-blue-600" />
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Nota Fiscal</span>
-            </div>
-            <div className="relative">
-              <input
-                type="number"
-                min="0"
-                max="100"
-                step="0.1"
-                value={taxas.percentualNotaFiscal}
-                onChange={(e) => setTaxas(prev => ({ ...prev, percentualNotaFiscal: parseFloat(e.target.value) || 0 }))}
-                className="w-full px-3 py-2.5 pr-8 border border-slate-200 rounded-lg text-right text-lg font-bold text-blue-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                placeholder="0"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-600 font-bold">%</span>
-            </div>
-            <p className="text-xs text-slate-500 mt-2">% sobre o valor total</p>
-          </div>
-
-          {/* FRETE */}
-          <div className="bg-white rounded-lg p-4 border border-emerald-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <Truck className="w-4 h-4 text-emerald-600" />
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Frete</span>
-            </div>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600 font-bold">R$</span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={taxas.valorFrete}
-                onChange={(e) => setTaxas(prev => ({ ...prev, valorFrete: parseFloat(e.target.value) || 0 }))}
-                className="w-full px-3 py-2.5 pl-10 pr-3 border border-slate-200 rounded-lg text-right text-lg font-bold text-emerald-600 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                placeholder="0,00"
-              />
-            </div>
-            <p className="text-xs text-slate-500 mt-2">
-              {taxas.tipoFrete === 'por_m2' && 'Por m² de vidro'}
-              {taxas.tipoFrete === 'por_peso' && 'Por kg de vidro'}
-              {taxas.tipoFrete === 'fixo' && 'Valor fixo por pedido'}
-            </p>
-          </div>
-
-          {/* TIPO DE FRETE */}
-          <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <Settings className="w-4 h-4 text-slate-600" />
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Tipo de Frete</span>
-            </div>
-            <div className="space-y-2">
-              <button
-                onClick={() => setTaxas(prev => ({ ...prev, tipoFrete: 'por_m2' }))}
-                className={`w-full px-3 py-2 rounded-lg text-xs font-bold transition-all ${
-                  taxas.tipoFrete === 'por_m2'
-                    ? 'bg-emerald-600 text-white shadow-md'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                Por m²
-              </button>
-              <button
-                onClick={() => setTaxas(prev => ({ ...prev, tipoFrete: 'por_peso' }))}
-                className={`w-full px-3 py-2 rounded-lg text-xs font-bold transition-all ${
-                  taxas.tipoFrete === 'por_peso'
-                    ? 'bg-emerald-600 text-white shadow-md'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                Por Peso (kg)
-              </button>
-              <button
-                onClick={() => setTaxas(prev => ({ ...prev, tipoFrete: 'fixo' }))}
-                className={`w-full px-3 py-2 rounded-lg text-xs font-bold transition-all ${
-                  taxas.tipoFrete === 'fixo'
-                    ? 'bg-emerald-600 text-white shadow-md'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                Fixo
-              </button>
-            </div>
-          </div>
         </div>
       </div>
 

@@ -108,7 +108,7 @@ export function DashboardFornecedor({ userData, onLogout, onNavigate }: Dashboar
                     )}
 
                     {activeTab === 'pedidos' && (
-                        <PedidosRecebidos fornecedorId={fornecedorId} tipoFornecedor="vidros" />
+                        <PedidosRecebidosInteligente fornecedorId={fornecedorId} />
                     )}
 
                     {activeTab === 'tabela-precos' && (

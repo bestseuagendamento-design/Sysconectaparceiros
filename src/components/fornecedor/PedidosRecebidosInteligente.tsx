@@ -22,11 +22,6 @@ interface Pedido {
   valor_total: number;
   items: any[];
   categoria: string;
-  cliente?: {
-    nome: string;
-    telefone: string;
-    endereco: string;
-  };
 }
 
 interface PedidosRecebidosInteligenteProps {
@@ -49,8 +44,6 @@ export function PedidosRecebidosInteligente({ fornecedorId }: PedidosRecebidosIn
   const [perfilFiltro, setPerfilFiltro] = useState('todos');
   const [busca, setBusca] = useState('');
   const [processando, setProcessando] = useState<string | null>(null);
-  const [modalDetalhes, setModalDetalhes] = useState(false); // 🔥 MODAL DE DETALHES
-  const [pedidoSelecionado, setPedidoSelecionado] = useState<Pedido | null>(null); // 🔥 PEDIDO SELECIONADO
 
   useEffect(() => {
     carregarPedidos();
@@ -315,77 +308,18 @@ export function PedidosRecebidosInteligente({ fornecedorId }: PedidosRecebidosIn
 
                   {/* Itens do Pedido */}
                   <div className="bg-slate-50 rounded-lg p-4 mb-4">
-                    <p className="text-sm font-bold text-slate-700 mb-3">📦 Itens do Pedido ({pedido.items?.length || 0}):</p>
-                    
-                    {/* 🔥 CLIENTE FINAL */}
-                    {pedido.cliente && (
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-                        <p className="text-xs font-bold text-blue-700 mb-1">👤 CLIENTE FINAL:</p>
-                        <p className="text-sm font-bold text-slate-900">{pedido.cliente.nome || 'Não informado'}</p>
-                        {pedido.cliente.telefone && <p className="text-xs text-slate-600">📞 {pedido.cliente.telefone}</p>}
-                        {pedido.cliente.endereco && <p className="text-xs text-slate-600">📍 {pedido.cliente.endereco}</p>}
-                      </div>
-                    )}
-                    
-                    {/* 🔥 LISTA DE ITENS COM DIMENSÕES */}
-                    <div className="space-y-2">
-                      {pedido.items?.map((item: any, itemIdx: number) => (
-                        <div key={itemIdx} className="bg-white border border-slate-200 rounded-lg p-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1">
-                              <p className="font-bold text-slate-900 mb-1">
-                                {item.descricao || item.tipo || 'Item sem descrição'}
-                              </p>
-                              
-                              {/* 🔥 DIMENSÕES */}
-                              {(item.largura || item.altura) && (
-                                <div className="flex items-center gap-3 text-sm text-slate-600 mb-1">
-                                  <span className="font-medium">📏 Dimensões:</span>
-                                  <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-mono">
-                                    {item.largura || 0}m × {item.altura || 0}m
-                                  </span>
-                                  {item.quantidade && (
-                                    <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-bold">
-                                      {item.quantidade}x
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                              
-                              {/* 🔥 DETALHES ADICIONAIS */}
-                              <div className="flex flex-wrap gap-2 text-xs">
-                                {item.tipo && (
-                                  <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded">
-                                    {item.tipo}
-                                  </span>
-                                )}
-                                {item.cor && (
-                                  <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded">
-                                    Cor: {item.cor}
-                                  </span>
-                                )}
-                                {item.espessura && (
-                                  <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded">
-                                    Espessura: {item.espessura}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            
-                            {/* 🔥 VALOR */}
-                            <div className="text-right">
-                              {item.valorUnitario && (
-                                <p className="text-xs text-slate-500">Unit: R$ {item.valorUnitario.toFixed(2)}</p>
-                              )}
-                              {item.valorTotal && (
-                                <p className="text-lg font-bold text-emerald-600">
-                                  R$ {item.valorTotal.toFixed(2)}
-                                </p>
-                              )}
-                            </div>
-                          </div>
+                    <p className="text-sm font-bold text-slate-700 mb-2">Itens do Pedido:</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {pedido.items.slice(0, 4).map((item: any, itemIdx: number) => (
+                        <div key={itemIdx} className="text-sm text-slate-600">
+                          • {item.descricao || item.tipo || 'Item'}
                         </div>
                       ))}
+                      {pedido.items.length > 4 && (
+                        <div className="text-sm text-slate-500">
+                          +{pedido.items.length - 4} mais
+                        </div>
+                      )}
                     </div>
                   </div>
 

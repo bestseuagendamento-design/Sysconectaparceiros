@@ -1,4 +1,3 @@
-import React, { useState, useEffect, useMemo } from 'react';
 import { CampanhaBanner } from './CampanhaBanner';
 import { DebugSupabase } from './fornecedor/DebugSupabase'; // 🔥 DEBUG COMPLETO DO SUPABASE
 import { DebugSalvamento } from './debug/DebugSalvamento'; // 🔥 DEBUG DE SALVAMENTO REAL
@@ -135,11 +134,6 @@ export function DashboardExecucao({
       action: () => setShowListaClientes(true)
     },
     {
-      title: 'Leitor DWG',
-      icon: FileText,
-      action: () => onNavigate('leitor-dwg')
-    },
-    {
       title: 'Estoque',
       icon: Boxes,
       action: () => setShowEstoque(true)
@@ -219,10 +213,6 @@ export function DashboardExecucao({
            <button onClick={() => setShowNovoOrcamento(true)} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all ${theme === 'dark' ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'}`}>
             <Plus className="w-5 h-5 text-amber-600" />
             {sidebarOpen && <span className="font-medium text-amber-600">Novo Orçamento</span>}
-          </button>
-          <button onClick={() => onNavigate('leitor-dwg')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all ${theme === 'dark' ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'}`}>
-            <FileText className="w-5 h-5 text-blue-600" />
-            {sidebarOpen && <span className="font-medium text-blue-600">Leitor DWG</span>}
           </button>
           {/* ... mantendo os outros atalhos da sidebar originais acessíveis via grid principal ... */}
         </nav>
