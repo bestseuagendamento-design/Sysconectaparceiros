@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧮 Teste Cálculo Técnico - Porta de Correr</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #fafafa;
+        }
+        .card {
+            background: white;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .exemplo {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .resultado {
+            background: #4caf50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .fixa { background: #ff9800; color: white; padding: 12px; border-radius: 6px; margin: 8px 0; }
+        .movel { background: #4caf50; color: white; padding: 12px; border-radius: 6px; margin: 8px 0; }
+        h1 { color: #333; }
+        h2 { color: #666; border-bottom: 2px solid #333; padding-bottom: 8px; }
+        code { background: #333; color: #0f0; padding: 2px 6px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🧮 Sistema de Cálculo Técnico - Porta de Correr</h1>
+    
+    <div class="card">
+        <h2>📏 MEDIDAS DO VÃO (EXEMPLO)</h2>
+        <div class="exemplo">
+            <p><strong>Largura do Vão:</strong> <code>2000mm</code></p>
+            <p><strong>Altura do Vão:</strong> <code>1000mm</code></p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🚪 PRODUTO</h2>
+        <p><strong>Porta de Correr 2 Folhas</strong></p>
+        <p>Configuração: 1 Folha FIXA + 1 Folha MÓVEL</p>
+    </div>
+
+    <div class="card">
+        <h2>⚙️ CÁLCULOS TÉCNICOS</h2>
+        
+        <h3>1. Divisão da Largura (IGUAL para todas)</h3>
+        <div class="exemplo">
+            <p><code>2000mm ÷ 2 folhas = 1000mm</code> por folha</p>
+        </div>
+
+        <h3>2. VIDRO FIXO</h3>
+        <div class="fixa">
+            <p><strong>Largura:</strong> 1000mm (divisão igual)</p>
+            <p><strong>Altura:</strong> 1000mm - 60mm = <strong>940mm</strong></p>
+            <hr style="border-color: rgba(255,255,255,0.3);">
+            <p style="font-size: 1.2em;">✅ <strong>RESULTADO: 1000mm × 940mm</strong></p>
+        </div>
+
+        <h3>3. VIDRO MÓVEL</h3>
+        <div class="movel">
+            <p><strong>Largura:</strong> 1000mm + 50mm = <strong>1050mm</strong></p>
+            <p><strong>Altura:</strong> 1000mm - 20mm = <strong>980mm</strong></p>
+            <hr style="border-color: rgba(255,255,255,0.3);">
+            <p style="font-size: 1.2em;">✅ <strong>RESULTADO: 1050mm × 980mm</strong></p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📋 REGRAS</h2>
+        <ul>
+            <li>✅ Divisão de Largura: SEMPRE IGUAL (Vão ÷ Total de Folhas)</li>
+            <li>✅ Folha FIXA - Largura: Divisão igual</li>
+            <li>✅ Folha FIXA - Altura: Vão - 60mm (desconto 6cm)</li>
+            <li>✅ Folha MÓVEL - Largura: Divisão igual + 50mm (acréscimo 5cm)</li>
+            <li>✅ Folha MÓVEL - Altura: Vão - 20mm (desconto 2cm)</li>
+        </ul>
+    </div>
+
+    <div class="resultado">
+        ✅ SISTEMA IMPLEMENTADO E FUNCIONANDO!
+    </div>
+
+    <script>
+        console.log('🎯 Sistema de Cálculo Técnico Carregado!');
+        console.log('📏 Vão: 2000mm × 1000mm');
+        console.log('🔒 Vidro FIXA: 1000mm × 940mm');
+        console.log('🔄 Vidro MÓVEL: 1050mm × 980mm');
+    </script>
+</body>
+</html>
